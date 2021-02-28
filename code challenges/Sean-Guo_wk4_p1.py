@@ -80,10 +80,12 @@ while True:
             B -= i
             if B < 0:
                 B = 0
+        
         # set new color value
         color = [R, G, B]
         pixels.fill(color)
         pixels.show()
+
     # fill empty
     else:
         pixels.fill(COLOR)
