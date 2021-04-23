@@ -2,7 +2,6 @@
 import time
 from math import atan2, degrees
 import board
-
 import displayio
 from adafruit_display_shapes.circle import Circle
 from adafruit_display_shapes.triangle import Triangle
@@ -10,23 +9,25 @@ from adafruit_clue import clue
 import math
 from adafruit_display_text.label import Label
 import terminalio
-
 import adafruit_gps
 
 
 # declare objects and variables
+
 # list of coordinates (target = [latitude, longitude])
 t0 = [34.147195, -118.102073]  # Vons
 t1 = [34.145869, -118.094245]  # Shell
 t2 = [34.128910, -118.114172]  # HuntingtonLib
 t3 = [34.127797, -118.147915]  # SouthCampus
 t4 = [34.105209, -118.094296]  # SanGabGolfCourse
-
 Lati_list = [t0[0], t1[0], t2[0], t3[0], t4[0]]
 Long_list = [t0[1], t1[1], t2[1], t3[1], t4[1]]
 
+# current location
 LongCurrent = -118.100708
 LatiCurrent = 34.140682
+
+# for calculation
 distance = [0, 0, 0, 0, 0]
 bearing = [0, 0, 0, 0, 0]
 a = [0, 0, 0, 0, 0]
@@ -34,7 +35,6 @@ c = [0, 0, 0, 0, 0]
 e = [0, 0, 0, 0, 0]
 f = [0, 0, 0, 0, 0]
 g = [0, 0, 0, 0, 0]
-
 R = 3958.8  # radious of earth in miles
 Delta_lati = [0, 0, 0, 0, 0]
 Delta_long = [0, 0, 0, 0, 0]
@@ -46,7 +46,7 @@ gps.send_command(b"PMTK314,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0")
 gps.send_command(b"PMTK220,1000")
 last_print = time.monotonic()
 
-
+# for ui
 d = 0  # direction angle
 rA = 80  # arrow dimention
 rB = 20  # arrow dimention
@@ -55,6 +55,7 @@ n_list = [0, 0, 0, 0, 0]
 number = 0
 t = 1
 
+# button
 buttonPre = False  # switch
 
 
@@ -69,7 +70,7 @@ def get_heading():
     magnet_x, magnet_y, _ = clue.magnetic
     return vector_2_degrees(magnet_x, magnet_y)
 
-# draw
+# draw the arrow
 def show(number, n):
 
     a0 = rA*math.cos(n*2*math.pi/360)
@@ -113,28 +114,27 @@ def show(number, n):
     return
 
 # loop foerver
-
 while True:
 
-    d = get_heading()   # compass direction
-
+    d = get_heading()   # get compass direction
     gps.update()
     current = time.monotonic()
+
     if current - last_print >= 1.0:
         last_print = current
-        LongCurrent = gps.longitude
+        LongCurrent = gps.longitude    # update location
         LatiCurrent = gps.latitude
         if not gps.has_fix:
             print("Waiting for fix...")
             continue
         # print(LatiCurrent)
         # print(LongCurrent)
-    if clue.button_b != buttonPre:
+    if clue.button_b != buttonPre:    # toggle
         buttonPre = clue.button_b
         if clue.button_b:
             t += 1
 
-    # calculate distances
+    # calculate
     for i in range(5):
         # calculate distances
         Delta_lati[i] = (Lati_list[i] - LatiCurrent)*math.pi/180
@@ -151,14 +151,11 @@ while True:
         bearing[i] = (g[i]*180/math.pi+360) % 360
 
 
-
-        number = distance[t % 5]
-        n_list[i] = 90 - d + bearing[i]    # match the direction with arrow
-        n = n_list[t % 5]
+        n_list[i] = 90 - d + bearing[i]    # match bearings with arrow
+        n = n_list[t % 5]  # get an angle for ui
+        number = distance[t % 5]  # get a distance
 
     show(number, n)
     print(n, t)
-    # print(n_list)
-    # print(distance[k], bearing[k])
 
     time.sleep(0.05)
